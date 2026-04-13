@@ -1,154 +1,99 @@
 import SectionHeader from "@/components/SectionHeader";
 
 const extractors = [
-  {
-    name: "Medical X-ray SD (FE+FA)",
-    type: "Generative Prior",
-    paradigm: "Diffusion-based",
-    desc: "UNet denoiser dari Medical X-ray Stable Diffusion digunakan sebagai frozen feature encoder. DFATB + FAFN mengagregasi multi-layer feature maps & attention maps menjadi z₁₂₈.",
-    highlights: ["Domain fine-tuned", "UNet encoder", "DFATB + FAFN", "Differential Transformer"],
-    color: "var(--accent-cyan)",
-    isMain: true,
-  },
-  {
-    name: "SDXL (FE+FA)",
-    type: "Generative Prior",
-    paradigm: "Diffusion-based",
-    desc: "General SDXL UNet sebagai feature encoder dengan pipeline FE+FA yang sama. Pembanding untuk mengukur dampak domain-specific training pada kualitas representasi.",
-    highlights: ["General-purpose", "UNet encoder", "DFATB + FAFN", "Same pipeline"],
-    color: "var(--accent-blue)",
-    isMain: true,
-  },
-  {
-    name: "ConvNeXtV2",
-    type: "CNN-based",
-    paradigm: "Convolutional",
-    desc: "Evolusi CNN modern dengan self-supervised learning (FCMAE). Unggul menangkap fitur lokal dengan efisiensi tinggi. Representasi kuat paradigma berbasis konvolusi.",
-    highlights: ["ConvNeXt + FCMAE", "Local features", "Efficient", "Modern CNN"],
-    color: "var(--accent-teal)",
-    isMain: false,
-  },
-  {
-    name: "DINOv2",
-    type: "Transformer-based",
-    paradigm: "Vision Transformer",
-    desc: "ViT dilatih self-supervised dengan knowledge distillation pada dataset besar tanpa label. Representasi general & transferable, global relation antar region yang kuat.",
-    highlights: ["Self-supervised", "Knowledge distill.", "Global attention", "General features"],
-    color: "var(--accent-amber)",
-    isMain: false,
-  },
-  {
-    name: "MaxViT",
-    type: "Hybrid-based",
-    paradigm: "Conv + Transformer",
-    desc: "Multi-Axis Vision Transformer menggabungkan convolution dengan local window + global grid attention. Menangkap fitur lokal detail sekaligus dependensi global.",
-    highlights: ["Multi-axis attn", "Local + global", "Hybrid design", "Efficient blocks"],
-    color: "var(--accent-red)",
-    isMain: false,
-  },
+  { abbr:"MedSD",  name:"Medical X-ray Stable Diffusion",  type:"Generative Prior",    paradigm:"Diffusion UNet encoder, domain fine-tuned on chest X-ray. Paired with full FE+FA (DFATB + FAFN + Differential Transformer) → z₁₂₈.", primary:true },
+  { abbr:"SDXL",   name:"Stable Diffusion XL",             type:"Generative Prior",    paradigm:"General-purpose SDXL UNet encoder. Same FE+FA pipeline as MedSD — isolates the effect of domain-specific pre-training.", primary:true },
+  { abbr:"CNX",    name:"ConvNeXtV2",                      type:"CNN",                 paradigm:"Modern ConvNet with FCMAE self-supervised pre-training. Captures rich local features with high computational efficiency.", primary:false },
+  { abbr:"DINO",   name:"DINOv2",                          type:"Vision Transformer",  paradigm:"ViT trained via self-supervised knowledge distillation on LVD-142M. Strong global representations; transferable across domains.", primary:false },
+  { abbr:"MXVT",   name:"MaxViT",                          type:"Hybrid",              paradigm:"Multi-Axis ViT combining local window + global grid attention with convolution. Captures local and global features simultaneously.", primary:false },
 ];
 
 export default function ModelPage() {
   return (
-    <div style={{ paddingTop: "100px", paddingBottom: "80px" }}>
-      <div style={{ maxWidth: "1200px", margin: "0 auto", padding: "0 24px" }}>
-        <div style={{ marginBottom: "64px" }}>
-          <div style={{ fontFamily: "var(--font-mono)", fontSize: "0.7rem", color: "var(--accent-cyan)", letterSpacing: "0.14em", textTransform: "uppercase", marginBottom: "16px" }}>— Model Architecture</div>
-          <h1 style={{ fontFamily: "var(--font-display)", fontWeight: "800", fontSize: "clamp(2rem, 5vw, 3.2rem)", letterSpacing: "-0.04em", lineHeight: "1.15", marginBottom: "20px" }}>
-            Feature Extractors & Architectures
+    <main style={{ paddingTop: "56px" }}>
+      <div style={{ background: "var(--ink)", padding: "52px 40px" }}>
+        <div style={{ maxWidth: "1100px", margin: "0 auto" }}>
+          <div style={{ fontFamily: "var(--font-mono)", fontSize: "0.62rem", color: "#6a5f50", letterSpacing: "0.14em", textTransform: "uppercase", marginBottom: "14px" }}>ChestPrior · Model</div>
+          <h1 style={{ fontFamily: "var(--font-serif)", fontWeight: 900, fontSize: "clamp(2rem,4vw,3rem)", color: "var(--paper)", letterSpacing: "-0.03em", lineHeight: 1.1 }}>
+            Feature Extractors &amp; Architecture
           </h1>
-          <p style={{ color: "var(--text-secondary)", fontSize: "1.05rem", maxWidth: "680px", lineHeight: "1.75" }}>
-            Lima feature extractor dievaluasi dalam framework yang fair — semua menghasilkan representasi yang masuk ke MLP classifier identik, sehingga perbandingan terisolasi pada kualitas representasi fitur.
-          </p>
         </div>
+      </div>
 
-        {/* Main proposed methods */}
-        <section style={{ marginBottom: "60px" }}>
-          <SectionHeader label="Proposed Methods" title="Generative Prior + FE+FA" subtitle="Dua pendekatan utama menggunakan diffusion model sebagai frozen feature encoder dengan Dual Feature Aggregation pipeline." />
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px", marginBottom: "20px" }}>
-            {extractors.filter(e => e.isMain).map((e) => (
-              <div key={e.name} className="card" style={{ padding: "32px", borderLeft: `3px solid ${e.color}` }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "16px" }}>
-                  <div>
-                    <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.65rem", color: e.color, display: "block", marginBottom: "6px", letterSpacing: "0.1em", textTransform: "uppercase" }}>{e.type}</span>
-                    <h3 style={{ fontFamily: "var(--font-display)", fontWeight: "700", fontSize: "1.15rem", color: e.color }}>{e.name}</h3>
-                  </div>
-                  <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.65rem", padding: "3px 10px", background: `${e.color}15`, border: `1px solid ${e.color}30`, borderRadius: "4px", color: e.color, whiteSpace: "nowrap" }}>{e.paradigm}</span>
-                </div>
-                <p style={{ color: "var(--text-secondary)", fontSize: "0.85rem", lineHeight: "1.75", marginBottom: "16px" }}>{e.desc}</p>
-                <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
-                  {e.highlights.map((h) => (
-                    <span key={h} style={{ fontFamily: "var(--font-mono)", fontSize: "0.64rem", padding: "2px 8px", background: `${e.color}10`, border: `1px solid ${e.color}25`, borderRadius: "4px", color: e.color }}>{h}</span>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
+      <div style={{ maxWidth: "1100px", margin: "0 auto", padding: "72px 40px" }}>
 
-          {/* FE+FA detail box */}
-          <div style={{ padding: "32px", background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: "12px" }}>
-            <h3 style={{ fontFamily: "var(--font-display)", fontWeight: "700", fontSize: "1.1rem", marginBottom: "20px", color: "var(--accent-cyan)" }}>FE+FA Module Detail</h3>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "16px" }}>
-              {[
-                { name: "DFATB", fullName: "Dual Feature Aggregation Transformer Block", desc: "Menggabungkan spatial attention dan channel attention secara komplementer dari multi-layer feature maps U-Net." },
-                { name: "FAFN", fullName: "Feature Aggregation Feed-Forward Network", desc: "Menangkap informasi spasial non-linear sekaligus mengurangi redundansi channel dari representasi fitur." },
-                { name: "Diff. Transformer", fullName: "Differential Denoising Transformer", desc: "Menekan noise pada fitur attention melalui operasi diferensial antara dua attention map independen." },
-              ].map((m) => (
-                <div key={m.name} style={{ padding: "20px", background: "var(--bg-elevated)", borderRadius: "8px", border: "1px solid var(--border)" }}>
-                  <div style={{ fontFamily: "var(--font-mono)", fontSize: "0.8rem", fontWeight: "700", color: "var(--accent-cyan)", marginBottom: "4px" }}>{m.name}</div>
-                  <div style={{ fontSize: "0.7rem", color: "var(--text-muted)", marginBottom: "10px", fontFamily: "var(--font-mono)" }}>{m.fullName}</div>
-                  <p style={{ color: "var(--text-secondary)", fontSize: "0.82rem", lineHeight: "1.6" }}>{m.desc}</p>
+        {/* All extractors */}
+        <section style={{ marginBottom: "72px" }}>
+          <SectionHeader index="1." label="Compared Methods" title="Five Feature Extractors" subtitle="Semua menghasilkan z₁₂₈ yang masuk ke MLP classifier identik — fair comparison terisolasi pada kualitas representasi fitur." />
+          <div style={{ display: "flex", flexDirection: "column" }}>
+            {extractors.map((e, i) => (
+              <div key={e.abbr} style={{
+                display: "grid", gridTemplateColumns: "56px 100px 140px 1fr",
+                gap: "20px", alignItems: "start",
+                padding: "24px 0",
+                borderBottom: i < extractors.length - 1 ? "1px solid var(--rule)" : "none",
+              }}>
+                <span style={{ fontFamily: "var(--font-serif)", fontWeight: 900, fontSize: "1.6rem", color: "var(--paper-darker)", lineHeight: 1, paddingTop: "4px" }}>
+                  {String(i + 1).padStart(2, "0")}
+                </span>
+                <div>
+                  <div style={{ fontFamily: "var(--font-mono)", fontWeight: 500, fontSize: "0.85rem", color: e.primary ? "var(--accent)" : "var(--ink)", marginBottom: "4px" }}>{e.abbr}</div>
+                  {e.primary && <span className="chip chip-accent" style={{ fontSize: "0.58rem" }}>Proposed</span>}
                 </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* Baseline methods */}
-        <section style={{ marginBottom: "60px" }}>
-          <SectionHeader label="Baselines" title="Conventional Feature Extractors" subtitle="Tiga paradigma berbeda sebagai pembanding — CNN, ViT, dan Hybrid. Semua menghasilkan representasi ke MLP classifier yang identik." />
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "16px" }}>
-            {extractors.filter(e => !e.isMain).map((e) => (
-              <div key={e.name} className="card" style={{ padding: "24px" }}>
-                <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.64rem", color: e.color, display: "block", marginBottom: "6px", letterSpacing: "0.1em", textTransform: "uppercase" }}>{e.type}</span>
-                <h3 style={{ fontFamily: "var(--font-display)", fontWeight: "700", fontSize: "1rem", color: "var(--text-primary)", marginBottom: "8px" }}>{e.name}</h3>
-                <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.63rem", padding: "2px 8px", background: `${e.color}12`, border: `1px solid ${e.color}30`, borderRadius: "4px", color: e.color, display: "inline-block", marginBottom: "12px" }}>{e.paradigm}</span>
-                <p style={{ color: "var(--text-secondary)", fontSize: "0.82rem", lineHeight: "1.7", marginBottom: "14px" }}>{e.desc}</p>
-                <div style={{ display: "flex", flexWrap: "wrap", gap: "5px" }}>
-                  {e.highlights.map((h) => <span key={h} style={{ fontFamily: "var(--font-mono)", fontSize: "0.62rem", padding: "2px 7px", background: "var(--bg-elevated)", border: "1px solid var(--border)", borderRadius: "4px", color: "var(--text-muted)" }}>{h}</span>)}
+                <div>
+                  <div style={{ fontFamily: "var(--font-sans)", fontSize: "0.88rem", fontWeight: 500, color: "var(--ink)", marginBottom: "4px", lineHeight: "1.3" }}>{e.name}</div>
+                  <span className={e.primary ? "chip chip-accent" : "chip chip-ink"} style={{ fontSize: "0.6rem" }}>{e.type}</span>
                 </div>
+                <p style={{ fontSize: "0.85rem", color: "var(--ink-light)", lineHeight: "1.7", paddingTop: "2px" }}>{e.paradigm}</p>
               </div>
             ))}
           </div>
         </section>
 
-        {/* MLP Classifier */}
+        <hr className="hr" style={{ marginBottom: "72px" }} />
+
+        {/* FE+FA modules */}
+        <section style={{ marginBottom: "72px" }}>
+          <SectionHeader index="2." label="FE+FA Detail" title="Dual Feature Aggregation Modules" />
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "12px" }}>
+            {[
+              { abbr:"DFATB", full:"Dual Feature Aggregation Transformer Block", desc:"Menggabungkan spatial attention dan channel attention secara komplementer dari multi-layer feature maps U-Net denoiser." },
+              { abbr:"FAFN",  full:"Feature Aggregation Feed-Forward Network",   desc:"Menangkap informasi spasial non-linear dan mengurangi redundansi channel dari representasi fitur yang telah diagregasi." },
+              { abbr:"DiffTF",full:"Differential Denoising Transformer",         desc:"Menekan noise pada attention features melalui operasi diferensial antara dua independent attention maps." },
+            ].map((m) => (
+              <div key={m.abbr} className="card" style={{ padding: "24px" }}>
+                <div style={{ fontFamily: "var(--font-mono)", fontWeight: 500, fontSize: "0.85rem", color: "var(--accent)", marginBottom: "4px" }}>{m.abbr}</div>
+                <div style={{ fontSize: "0.72rem", color: "var(--ink-faint)", fontFamily: "var(--font-mono)", marginBottom: "10px", lineHeight: "1.4" }}>{m.full}</div>
+                <p style={{ fontSize: "0.84rem", color: "var(--ink-light)", lineHeight: "1.65" }}>{m.desc}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <hr className="hr" style={{ marginBottom: "72px" }} />
+
+        {/* MLP */}
         <section>
-          <SectionHeader label="Classifier" title="Unified MLP Classifier" />
-          <div className="card" style={{ padding: "32px" }}>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "32px" }}>
-              <div>
-                <p style={{ color: "var(--text-secondary)", fontSize: "0.88rem", lineHeight: "1.8", marginBottom: "16px" }}>
-                  Semua feature extractor menghasilkan representasi 128-dimensi (z₁₂₈) yang diumpankan ke MLP classifier yang identik. Ini memastikan evaluasi yang fair dan terisolasi pada kualitas representasi fitur.
-                </p>
-                <p style={{ color: "var(--text-secondary)", fontSize: "0.88rem", lineHeight: "1.8" }}>
-                  Arsitektur MLP yang sama digunakan untuk semua 5 metode di semua 4 skenario, sehingga perbedaan performa murni mencerminkan kemampuan feature extractor.
-                </p>
-              </div>
-              <div style={{ background: "var(--bg-elevated)", borderRadius: "8px", padding: "24px", fontFamily: "var(--font-mono)", fontSize: "0.75rem", color: "var(--text-secondary)", lineHeight: "2" }}>
-                <div style={{ color: "var(--accent-cyan)", marginBottom: "8px" }}>// MLP Classifier Architecture</div>
-                <div>Input: z₁₂₈ [B, 128]</div>
-                <div style={{ paddingLeft: "12px", color: "var(--text-muted)" }}>↓ Linear(128, 256)</div>
-                <div style={{ paddingLeft: "12px", color: "var(--text-muted)" }}>↓ ReLU + Dropout</div>
-                <div style={{ paddingLeft: "12px", color: "var(--text-muted)" }}>↓ Linear(256, 128)</div>
-                <div style={{ paddingLeft: "12px", color: "var(--text-muted)" }}>↓ ReLU + Dropout</div>
-                <div style={{ paddingLeft: "12px", color: "var(--text-muted)" }}>↓ Linear(128, 6)</div>
-                <div>Output: logits [B, 6 classes]</div>
-              </div>
+          <SectionHeader index="3." label="Classifier" title="Unified MLP Head" subtitle="Arsitektur identik digunakan untuk semua 5 extractor di semua 4 skenario." />
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "24px", alignItems: "start" }}>
+            <p style={{ fontSize: "0.9rem", color: "var(--ink-light)", lineHeight: "1.8" }}>
+              Seluruh feature extractor menghasilkan representasi z₁₂₈ [B, 128] yang diumpankan ke MLP classifier yang sama persis. Desain ini memastikan bahwa perbedaan performa antar metode semata-mata mencerminkan kualitas representasi fitur, bukan keuntungan arsitektur classifier.
+            </p>
+            <div style={{ background: "var(--paper-dark)", border: "1px solid var(--rule)", borderRadius: "4px", padding: "24px", fontFamily: "var(--font-mono)", fontSize: "0.78rem", color: "var(--ink-mid)", lineHeight: "2.1" }}>
+              <div style={{ color: "var(--ink-faint)", marginBottom: "4px" }}>// MLP Classifier</div>
+              <div>Input:  z₁₂₈  [B, 128]</div>
+              <div style={{ paddingLeft: "16px", color: "var(--ink-light)" }}>↓  Linear(128 → 256)  +  ReLU</div>
+              <div style={{ paddingLeft: "16px", color: "var(--ink-light)" }}>↓  Dropout</div>
+              <div style={{ paddingLeft: "16px", color: "var(--ink-light)" }}>↓  Linear(256 → 128)  +  ReLU</div>
+              <div style={{ paddingLeft: "16px", color: "var(--ink-light)" }}>↓  Dropout</div>
+              <div style={{ paddingLeft: "16px", color: "var(--ink-light)" }}>↓  Linear(128 → 6)</div>
+              <div>Output: logits  [B, 6]</div>
             </div>
           </div>
         </section>
       </div>
-    </div>
+
+      <style>{`@media (max-width: 768px) { div[style*="grid-template-columns: 56px"] { grid-template-columns: 1fr !important; } div[style*="grid-template-columns: 1fr 1fr 1fr"] { grid-template-columns: 1fr !important; } div[style*="grid-template-columns: 1fr 1fr"] { grid-template-columns: 1fr !important; } }`}</style>
+    </main>
   );
 }

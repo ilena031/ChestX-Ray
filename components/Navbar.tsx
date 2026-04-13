@@ -3,133 +3,71 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-const navLinks = [
+const links = [
   { href: "/", label: "Overview" },
   { href: "/methodology", label: "Methodology" },
-  { href: "/model", label: "Model" },
-  { href: "/comparison", label: "Comparison" },
   { href: "/results", label: "Results" },
   { href: "/team", label: "Team" },
-  { href: "/references", label: "References" },
 ];
 
 export default function Navbar() {
   const pathname = usePathname();
   const [scrolled, setScrolled] = useState(false);
-  const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
-    const handler = () => setScrolled(window.scrollY > 20);
-    window.addEventListener("scroll", handler);
-    return () => window.removeEventListener("scroll", handler);
+    const fn = () => setScrolled(window.scrollY > 10);
+    window.addEventListener("scroll", fn);
+    return () => window.removeEventListener("scroll", fn);
   }, []);
 
   return (
-    <nav
-      style={{
-        position: "fixed",
-        top: 0,
-        left: 0,
-        right: 0,
-        zIndex: 100,
-        padding: "0 24px",
-        height: "60px",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        background: scrolled
-          ? "rgba(6, 11, 17, 0.95)"
-          : "rgba(6, 11, 17, 0.7)",
-        borderBottom: scrolled
-          ? "1px solid var(--border-bright)"
-          : "1px solid var(--border)",
-        backdropFilter: "blur(20px)",
-        transition: "all 0.3s ease",
-      }}
-    >
-      {/* Logo */}
-      <Link href="/" style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: "10px" }}>
-        <div
-          style={{
-            width: "28px",
-            height: "28px",
-            borderRadius: "6px",
-            background: "linear-gradient(135deg, var(--accent-cyan), var(--accent-blue))",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            fontSize: "12px",
-            fontWeight: "700",
-            color: "#fff",
-            fontFamily: "var(--font-mono)",
-          }}
-        >
-          CP
-        </div>
-        <span
-          style={{
-            fontFamily: "var(--font-display)",
-            fontWeight: "700",
-            fontSize: "1rem",
-            color: "var(--text-primary)",
-            letterSpacing: "-0.02em",
-          }}
-        >
-          ChestPrior
-        </span>
+    <nav style={{
+      position: "fixed", top: 0, left: 0, right: 0, zIndex: 100,
+      height: "56px",
+      display: "flex", alignItems: "center", justifyContent: "space-between",
+      padding: "0 40px",
+      background: scrolled ? "rgba(245,240,232,0.97)" : "var(--paper)",
+      borderBottom: scrolled ? "1px solid var(--rule)" : "1px solid transparent",
+      backdropFilter: "blur(10px)",
+      transition: "all 0.3s ease",
+    }}>
+      {/* Wordmark */}
+      <Link href="/" style={{ textDecoration: "none", display: "flex", alignItems: "baseline", gap: "6px" }}>
+        <span style={{
+          fontFamily: "var(--font-serif)", fontWeight: 700, fontSize: "1.1rem",
+          color: "var(--ink)", letterSpacing: "-0.01em",
+        }}>ChestPrior</span>
+        <span style={{
+          fontFamily: "var(--font-mono)", fontSize: "0.6rem",
+          color: "var(--ink-light)", letterSpacing: "0.06em",
+        }}>2026</span>
       </Link>
 
-      {/* Desktop links */}
-      <div style={{ display: "flex", gap: "4px", alignItems: "center" }} className="hidden-mobile">
-        {navLinks.map((link) => (
-          <Link
-            key={link.href}
-            href={link.href}
-            style={{
+      {/* Nav links */}
+      <div style={{ display: "flex", gap: "2px" }}>
+        {links.map((l) => {
+          const active = pathname === l.href;
+          return (
+            <Link key={l.href} href={l.href} style={{
               textDecoration: "none",
-              padding: "5px 12px",
-              borderRadius: "6px",
-              fontFamily: "var(--font-mono)",
-              fontSize: "0.72rem",
-              letterSpacing: "0.04em",
-              color:
-                pathname === link.href
-                  ? "var(--accent-cyan)"
-                  : "var(--text-secondary)",
-              background:
-                pathname === link.href
-                  ? "rgba(0,212,255,0.08)"
-                  : "transparent",
-              border:
-                pathname === link.href
-                  ? "1px solid rgba(0,212,255,0.2)"
-                  : "1px solid transparent",
-              transition: "all 0.2s ease",
-            }}
-          >
-            {link.label}
-          </Link>
-        ))}
+              padding: "5px 14px",
+              fontFamily: "var(--font-sans)",
+              fontSize: "0.82rem",
+              fontWeight: active ? 500 : 400,
+              color: active ? "var(--accent)" : "var(--ink-mid)",
+              borderBottom: active ? "2px solid var(--accent)" : "2px solid transparent",
+              transition: "all 0.15s ease",
+              letterSpacing: "0.01em",
+            }}>{l.label}</Link>
+          );
+        })}
       </div>
 
-      {/* Badge */}
-      <div
-        style={{
-          fontFamily: "var(--font-mono)",
-          fontSize: "0.65rem",
-          color: "var(--text-muted)",
-          letterSpacing: "0.06em",
-        }}
-        className="hidden-mobile"
-      >
-        KCV · ITS · 2026
-      </div>
-
-      <style>{`
-        @media (max-width: 768px) {
-          .hidden-mobile { display: none !important; }
-        }
-      `}</style>
+      {/* Right: institution tag */}
+      <span style={{
+        fontFamily: "var(--font-mono)", fontSize: "0.62rem",
+        color: "var(--ink-faint)", letterSpacing: "0.08em",
+      }}>ITS · KCV</span>
     </nav>
   );
 }
