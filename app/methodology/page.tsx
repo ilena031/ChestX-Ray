@@ -14,7 +14,7 @@ export default function Methodology() {
       <div style={{ background: "var(--ink)", padding: "52px 40px" }}>
         <div style={{ maxWidth: "1100px", margin: "0 auto" }}>
           <div style={{ fontFamily: "var(--font-mono)", fontSize: "0.62rem", color: "#6a5f50", letterSpacing: "0.14em", textTransform: "uppercase", marginBottom: "14px" }}>
-            ChestPrior · Methodology
+            A for admin · Methodology
           </div>
           <h1 style={{ fontFamily: "var(--font-serif)", fontWeight: 900, fontSize: "clamp(2rem,4vw,3rem)", color: "var(--paper)", letterSpacing: "-0.03em", lineHeight: 1.1 }}>
             Pipeline &amp; Experimental Design
@@ -47,12 +47,12 @@ export default function Methodology() {
 
         {/* FSA Augmentation Detail */}
         <section style={{ marginBottom: "72px" }}>
-          <SectionHeader index="2." label="Augmentation Design" title="Feature Space Augmentation (FSA)" subtitle="Tiga teknik augmentasi diterapkan langsung di feature space (bukan pixel space) saat training." />
+          <SectionHeader index="2." label="Augmentation Design" title="Feature Space Augmentation (FSA)" subtitle="Tiga teknik augmentasi diterapkan secara berurutan di feature space (bukan pixel space) saat training." />
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "12px" }}>
             {[
-              { name: "Gaussian Noise", param: "σ = 0.01", desc: "Injeksi noise ringan pada vektor fitur untuk meningkatkan ketahanan terhadap variasi input." },
-              { name: "Feature Dropout", param: "10% dims → 0", desc: "Secara acak mematikan 10% dimensi fitur untuk mendorong representasi yang lebih robust dan tidak over-rely pada fitur tertentu." },
-              { name: "Mixup", param: "α = 0.2 (Beta)", desc: "Interpolasi konveks antara dua sampel dalam feature space dengan soft label — mengurangi overfitting dan meningkatkan generalisasi." },
+              { name: "1. Feature Space SMOTE", param: "k-NN interpolation", desc: "Oversample kelas minoritas di ruang fitur — untuk setiap kelas yang jumlahnya < median, buat sampel sintetis via interpolasi acak antar pasangan dari kelas yang sama." },
+              { name: "2. Gaussian Noise", param: "σ = 0.01", desc: "Injeksi noise Gaussian iid N(0, σ²) ke seluruh batch (asli + sintetis) untuk meningkatkan ketahanan terhadap variasi input." },
+              { name: "3. Mixup", param: "α = 0.2 (Beta)", desc: "Interpolasi konveks antara dua sampel dalam feature space. λ ~ Beta(α,α) menghasilkan soft label one-hot — mengurangi overfitting dan meningkatkan generalisasi." },
             ].map((t) => (
               <div key={t.name} className="card" style={{ padding: "24px" }}>
                 <div style={{ fontFamily: "var(--font-mono)", fontWeight: 500, fontSize: "0.85rem", color: "var(--accent)", marginBottom: "4px" }}>{t.name}</div>

@@ -44,16 +44,16 @@ export default function Home() {
             lineHeight: "1.08", letterSpacing: "-0.03em",
             color: "var(--ink)", marginBottom: "28px",
           }}>
-            Generative Priors<br/>
-            <em style={{ fontWeight: 400, color: "var(--ink-mid)" }}>for Robust</em><br/>
-            Chest X-ray<br/>Classification
+            Optimalisasi Klasifikasi<br/>
+            <em style={{ fontWeight: 400, color: "var(--ink-mid)" }}>X-Ray Menggunakan</em><br/>
+            Medical Stable Diffusion<br/>& Dual Feature Aggregation
           </h1>
 
           <p style={{
             fontSize: "1rem", lineHeight: "1.8",
             color: "var(--ink-light)", maxWidth: "520px", marginBottom: "36px",
           }}>
-            Evaluasi komparatif generative prior berbasis diffusion model dan modul Dual Feature Aggregation untuk klasifikasi chest X-ray di bawah kondisi data imbalanced dan corrupt.
+            Optimalisasi klasifikasi chest X-ray menggunakan fitur dari Medical Stable Diffusion yang diagregasi oleh modul Dual Feature Aggregation, dievaluasi terhadap 4 skenario (balanced/imbalanced × tanpa/+FSA) dan dibandingkan dengan 3 baseline modern.
           </p>
 
           <div style={{ display: "flex", gap: "12px", alignItems: "center", flexWrap: "wrap" }}>

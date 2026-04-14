@@ -145,44 +145,130 @@ class MLPClassifier(nn.Module):
 
 
 # ============================================================
-# CELL 3 — Feature Space Augmentation (FSA)
+# CELL 3 — Feature Space Augmentation (FSA) — Revised
 # ============================================================
+# Tiga metode:
+#   1. Feature Space SMOTE  — oversample kelas minoritas di ruang fitur
+#   2. Gaussian Noise Injection — perturbasi ringan seluruh batch
+#   3. Mixup — interpolasi linear antar sampel + soft label
 
-def apply_fsa(x: torch.Tensor, y: torch.Tensor, num_classes: int = NUM_CLASSES):
+import random
+
+# ── 1. Feature Space SMOTE ───────────────────────────────────
+
+def feature_smote(x: torch.Tensor, y: torch.Tensor,
+                  num_classes: int = NUM_CLASSES,
+                  k: int = 5) -> tuple[torch.Tensor, torch.Tensor]:
     """
-    Feature Space Augmentation — diterapkan hanya saat training.
-    Returns augmented (x, y_soft).
+    Synthetic oversampling di ruang fitur (analog SMOTE).
+    Untuk setiap kelas minoritas, buat sampel sintetis dengan
+    interpolasi acak antara sampel asli dan salah satu k-NN-nya
+    (approx: k-NN dari kelas yang sama dalam batch ini).
 
-    Techniques:
-      1. Gaussian noise injection
-      2. Feature dropout mask (10% dims → 0)
-      3. Mixup in feature space
+    Hanya membuat sampel untuk kelas yang jumlahnya < median count.
+    Mengembalikan (x_syn, y_syn) — harus di-concat dengan (x, y) asli.
+    """
+    x_cpu = x.detach().cpu()
+    y_cpu = y.detach().cpu().numpy()
+
+    counts = np.bincount(y_cpu, minlength=num_classes)
+    median_count = int(np.median(counts[counts > 0]))
+
+    syn_x_list, syn_y_list = [], []
+
+    for cls in range(num_classes):
+        idx = np.where(y_cpu == cls)[0]
+        n = len(idx)
+        if n == 0 or n >= median_count:
+            continue                    # skip kelas mayoritas / kosong
+
+        x_cls = x_cpu[idx]             # (n, feat_dim)
+        n_syn = median_count - n       # jumlah sampel sintetis yang dibutuhkan
+
+        # Pilih pasangan secara acak (tanpa k-NN eksak agar tetap efisien)
+        i1 = torch.randint(0, n, (n_syn,))
+        i2 = torch.randint(0, n, (n_syn,))
+        lam = torch.rand(n_syn, 1)     # interpolasi acak ∈ [0,1]
+
+        x_syn = lam * x_cls[i1] + (1 - lam) * x_cls[i2]
+        y_syn = torch.full((n_syn,), cls, dtype=torch.long)
+
+        syn_x_list.append(x_syn)
+        syn_y_list.append(y_syn)
+
+    if not syn_x_list:
+        return x, y                    # tidak ada kelas minoritas → kembalikan asli
+
+    x_syn_all = torch.cat(syn_x_list, dim=0).to(x.device)
+    y_syn_all = torch.cat(syn_y_list, dim=0).to(y.device)
+
+    x_out = torch.cat([x, x_syn_all], dim=0)
+    y_out = torch.cat([y, y_syn_all], dim=0)
+
+    return x_out, y_out
+
+
+# ── 2. Gaussian Noise Injection ──────────────────────────────
+
+def gaussian_noise(x: torch.Tensor, sigma: float = 0.01) -> torch.Tensor:
+    """Tambahkan noise Gaussian iid N(0, sigma²) ke setiap fitur."""
+    return x + torch.randn_like(x) * sigma
+
+
+# ── 3. Mixup ─────────────────────────────────────────────────
+
+def mixup(x: torch.Tensor, y: torch.Tensor,
+          num_classes: int = NUM_CLASSES,
+          alpha: float = 0.2) -> tuple[torch.Tensor, torch.Tensor]:
+    """
+    Mixup di ruang fitur.
+    λ ~ Beta(alpha, alpha); interpolasi pasangan (x_i, x_j).
+    Mengembalikan (x_mix, y_soft) — y_soft adalah soft label one-hot.
     """
     B = x.size(0)
+    lam = float(np.random.beta(alpha, alpha))
+    idx = torch.randperm(B, device=x.device)
 
-    # 1. Gaussian noise
-    x = x + torch.randn_like(x) * 0.01
+    x_mix = lam * x + (1 - lam) * x[idx]
 
-    # 2. Feature dropout mask
-    mask = (torch.rand_like(x) > 0.10).float()
-    x = x * mask
-
-    # 3. Mixup
-    alpha = 0.2
-    lam   = np.random.beta(alpha, alpha)
-    idx   = torch.randperm(B, device=x.device)
-    x     = lam * x + (1 - lam) * x[idx]
-
-    # One-hot encode labels → soft labels setelah mixup
+    # One-hot → soft label setelah mixup
     y_onehot = torch.zeros(B, num_classes, device=x.device)
     y_onehot.scatter_(1, y.unsqueeze(1), 1.0)
-    y_mix_onehot = lam * y_onehot + (1 - lam) * y_onehot[idx]
+    y_soft = lam * y_onehot + (1 - lam) * y_onehot[idx]
 
-    return x, y_mix_onehot   # y_mix_onehot untuk soft CrossEntropy
+    return x_mix, y_soft
 
 
-def soft_cross_entropy(logits: torch.Tensor, soft_targets: torch.Tensor) -> torch.Tensor:
-    """CrossEntropy dengan soft (mixup) targets."""
+# ── Pipeline utama ────────────────────────────────────────────
+
+def apply_fsa(x: torch.Tensor, y: torch.Tensor,
+              num_classes: int = NUM_CLASSES) -> tuple[torch.Tensor, torch.Tensor]:
+    """
+    Tiga-tahap FSA yang dipanggil di train_epoch saat use_aug=True.
+
+    Urutan:
+      1. FS-SMOTE   → perluas batch dengan sampel sintetis kelas minoritas
+      2. Gaussian Noise → perturbasi seluruh batch (asli + sintetis)
+      3. Mixup       → interpolasi antar sampel + soft label
+
+    Mengembalikan (x_aug, y_soft) untuk soft_cross_entropy.
+    """
+    # Tahap 1: FS-SMOTE (hanya relevan untuk scenario imbalanced,
+    #          pada balanced tidak ada efek karena count ≈ median)
+    x, y = feature_smote(x, y, num_classes=num_classes)
+
+    # Tahap 2: Gaussian Noise
+    x = gaussian_noise(x, sigma=0.01)
+
+    # Tahap 3: Mixup → output sudah berupa soft label
+    x_aug, y_soft = mixup(x, y, num_classes=num_classes, alpha=0.2)
+
+    return x_aug, y_soft
+
+
+def soft_cross_entropy(logits: torch.Tensor,
+                       soft_targets: torch.Tensor) -> torch.Tensor:
+    """CrossEntropy dengan soft (mixup) targets — tidak berubah."""
     log_probs = torch.log_softmax(logits, dim=1)
     return -(soft_targets * log_probs).sum(dim=1).mean()
 

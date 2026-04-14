@@ -37,7 +37,7 @@ export default function Navbar() {
         <span style={{
           fontFamily: "var(--font-serif)", fontWeight: 700, fontSize: "1.1rem",
           color: "var(--ink)", letterSpacing: "-0.01em",
-        }}>ChestPrior</span>
+        }}>A for admin</span>
         <span style={{
           fontFamily: "var(--font-mono)", fontSize: "0.6rem",
           color: "var(--ink-light)", letterSpacing: "0.06em",

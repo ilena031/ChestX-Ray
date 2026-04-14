@@ -4,8 +4,8 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 
 export const metadata: Metadata = {
-  title: "ChestPrior — Robust Chest X-ray Classification",
-  description: "Comparative Analysis of Generative Priors and Dual Feature Aggregation for Robust Chest X-ray Classification under Data Imbalance.",
+  title: "A for admin — Optimalisasi Klasifikasi X-Ray",
+  description: "Optimalisasi Klasifikasi X-Ray Menggunakan Medical Stable Diffusion dan Dual Feature Aggregation.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

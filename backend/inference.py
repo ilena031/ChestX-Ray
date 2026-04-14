@@ -2,6 +2,7 @@ import gc
 import torch
 import numpy as np
 from PIL import Image
+import os
 
 from diffusers import StableDiffusionPipeline
 from models import (
@@ -86,9 +87,9 @@ class MedicalXRayPipeline:
             p.requires_grad = False
 
         self.cls_head = MLPClassifier(
-            feat_dim=ckpt.get("fa_z_dim", 128) if isinstance(ckpt, dict) and "fa_z_dim" in ckpt else 128,
-            num_classes=ckpt.get("num_classes", 6) if isinstance(ckpt, dict) and "num_classes" in ckpt else 6
-        ).to(self.device).eval()
+            feat_dim=ckpt.get("fa_z_dim", 128),
+            num_classes=ckpt.get("num_classes", 6)
+        ).to(self.device)
 
         if self.mlp_path and os.path.exists(self.mlp_path):
             mlp_ckpt = torch.load(self.mlp_path, map_location=self.device)
@@ -176,3 +177,4 @@ class MedicalXRayPipeline:
             }
         finally:
             self.cleanup()
+

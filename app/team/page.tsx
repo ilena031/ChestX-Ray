@@ -1,13 +1,15 @@
+"use client";
+
 export default function TeamPage() {
   const team = [
-    { name: "Syahribanun", role: "Lead Researcher", contrib: "Research design · pipeline development · FE+FA implementation · writeup", initials: "S" },
-    { name: "Ahmad Naufal Farras", role: "Researcher", contrib: "Pengembangan pipeline Feature Extraction · Pengembangan dan Deployment Model di Web", initials: "A" },
+    { name: "Syahribanun", role: "Lead Researcher", contrib: "Research design · pipeline development · FE+FA implementation · writeup", initials: "S", photo: "/team/syahribanun.jpg" },
+    { name: "Ahmad Naufal Farras", role: "Researcher", contrib: "Classification model development · Feature Extraction module implementation · Model & web deployment", initials: "A", photo: "/team/farras.jpg" },
   ];
   return (
     <main style={{ paddingTop: "56px" }}>
       <div style={{ background: "var(--ink)", padding: "52px 40px" }}>
         <div style={{ maxWidth: "1100px", margin: "0 auto" }}>
-          <div style={{ fontFamily: "var(--font-mono)", fontSize: "0.62rem", color: "#6a5f50", letterSpacing: "0.14em", textTransform: "uppercase", marginBottom: "14px" }}>ChestPrior · Team</div>
+          <div style={{ fontFamily: "var(--font-mono)", fontSize: "0.62rem", color: "#6a5f50", letterSpacing: "0.14em", textTransform: "uppercase", marginBottom: "14px" }}>A for admin · Team</div>
           <h1 style={{ fontFamily: "var(--font-serif)", fontWeight: 900, fontSize: "clamp(2rem,4vw,3rem)", color: "var(--paper)", letterSpacing: "-0.03em", lineHeight: 1.1 }}>
             Research Team
           </h1>
@@ -18,25 +20,38 @@ export default function TeamPage() {
 
         {/* Members */}
         <section style={{ marginBottom: "72px" }}>
-          <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
             {team.map((m) => (
-              <div key={m.name} className="card" style={{ padding: "32px", display: "grid", gridTemplateColumns: "64px 1fr", gap: "28px", alignItems: "center" }}>
+              <div key={m.name} className="card" style={{ padding: "32px", display: "grid", gridTemplateColumns: "88px 1fr", gap: "28px", alignItems: "center" }}>
+                {/* Photo placeholder — replace src with actual photo */}
                 <div style={{
-                  width: "64px", height: "64px", borderRadius: "50%",
+                  width: "88px", height: "88px", borderRadius: "50%",
+                  overflow: "hidden", border: "3px solid var(--rule)",
                   background: "var(--ink)", display: "flex", alignItems: "center", justifyContent: "center",
-                  fontFamily: "var(--font-serif)", fontWeight: 900, fontSize: "1.4rem", color: "var(--paper)",
-                }}>{m.initials}</div>
+                  flexShrink: 0,
+                }}>
+                  <img
+                    src={m.photo}
+                    alt={m.name}
+                    style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                    onError={(e) => {
+                      // Fallback to initials if photo not found
+                      const target = e.currentTarget;
+                      target.style.display = "none";
+                      const parent = target.parentElement;
+                      if (parent) {
+                        parent.innerHTML = `<span style="font-family:var(--font-serif);font-weight:900;font-size:1.6rem;color:var(--paper)">${m.initials}</span>`;
+                      }
+                    }}
+                  />
+                </div>
                 <div>
                   <h3 style={{ fontFamily: "var(--font-serif)", fontWeight: 700, fontSize: "1.3rem", color: "var(--ink)", marginBottom: "4px" }}>{m.name}</h3>
-                  <div style={{ fontFamily: "var(--font-mono)", fontSize: "0.68rem", color: "var(--accent)", letterSpacing: "0.06em", marginBottom: "8px" }}>{m.role}</div>
-                  <p style={{ fontSize: "0.84rem", color: "var(--ink-light)" }}>{m.contrib}</p>
+                  <div style={{ fontFamily: "var(--font-mono)", fontSize: "0.7rem", color: "var(--accent)", letterSpacing: "0.06em", marginBottom: "10px", fontWeight: 500 }}>{m.role}</div>
+                  <p style={{ fontSize: "0.88rem", color: "var(--ink-light)", lineHeight: "1.7", fontWeight: 400 }}>{m.contrib}</p>
                 </div>
               </div>
             ))}
-            {/* Placeholder */}
-            <div style={{ padding: "20px 24px", border: "1px dashed var(--rule)", borderRadius: "4px", fontFamily: "var(--font-mono)", fontSize: "0.72rem", color: "var(--ink-faint)", textAlign: "center" }}>
-              Tambahkan anggota tim lain di <code>app/team/page.tsx</code>
-            </div>
           </div>
         </section>
 
