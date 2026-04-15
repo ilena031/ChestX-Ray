@@ -2,7 +2,7 @@
 
 export default function TeamPage() {
   const team = [
-    { name: "Syahribanun", role: "Lead Researcher", contrib: "Research design · pipeline development · FE+FA implementation · writeup", initials: "S", photo: "/team/syahribanun.jpg" },
+    { name: "Syahribanun", role: "Lead Researcher", contrib: "Research design · pipeline development · FE+FA implementation · writeup", initials: "S", photo: "/team/syahribanun.jpeg" },
     { name: "Ahmad Naufal Farras", role: "Researcher", contrib: "Classification model development · Feature Extraction module implementation · Model & web deployment", initials: "A", photo: "/team/farras.jpg" },
   ];
   return (
@@ -65,8 +65,8 @@ export default function TeamPage() {
               Institut Teknologi Sepuluh Nopember
             </h2>
             <p style={{ fontSize: "0.88rem", color: "var(--ink-light)", lineHeight: "1.8" }}>
-              Departemen Teknik Informatika<br/>
-              Laboratorium Komputasi Cerdas dan Visi (KCV)<br/>
+              Departemen Teknik Informatika<br />
+              Laboratorium Komputasi Cerdas dan Visi (KCV)<br />
               Surabaya, Jawa Timur, Indonesia
             </p>
           </div>
