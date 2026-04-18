@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import SectionHeader from "@/components/SectionHeader";
 
 export default function InferencePage() {
@@ -53,8 +53,7 @@ export default function InferencePage() {
     }
   };
 
-  // Check backend on mount
-  useState(() => { checkBackend(); });
+  useEffect(() => { checkBackend(); }, []);
 
   const handlePredict = async () => {
     if (!selectedFile) return;
@@ -73,7 +72,14 @@ export default function InferencePage() {
       });
 
       if (!res.ok) {
-        throw new Error(`API returned status: ${res.status}`);
+        let detail = "";
+        try {
+          const body = await res.json();
+          detail = body?.detail ?? JSON.stringify(body);
+        } catch {
+          detail = await res.text();
+        }
+        throw new Error(`API ${res.status}: ${detail}`);
       }
 
       const data = await res.json();

@@ -1,3 +1,4 @@
+
 # Optimalisasi Klasifikasi X-Ray Menggunakan Medical Stable Diffusion dan Dual Feature Aggregation
 
 > **KCV Lab Selection Project — Institut Teknologi Sepuluh Nopember, 2026**
@@ -131,14 +132,13 @@ ChestX-Ray/
 │   ├── Dockerfile                #   Backend container
 │   └── requirements.txt          #   Python dependencies
 │
-├── research_file/                # Pipeline research files & trained weights
+├── research/                     # Pipeline research files & trained weights
 │   ├── fp-medical-banun.py       #   Medical SD feature extraction pipeline
 │   ├── fp-mlp-classifier.py      #   MLP training + FSA + evaluation
 │   ├── Medical X-ray Stable Diffusion_feature_map_extractor.py
 │   │                             #   Core SD feature map extraction logic
-│   ├── fa_best_med_balanced_1.pt #   FA model checkpoint (balanced scenario)
-│   ├── fa_best_med_imbalanced.pt #   FA model checkpoint (imbalanced scenario)
-│   └── best_overall_weights.pt   #   Best MLP classifier weights
+│   ├── fa_best_med_balanced_1.pt #   FA encoder weights (trained)
+│   └── best_overall_weights.pt   #   MLP classifier weights
 │
 ├── components/                   # Shared React components
 │   ├── Navbar.tsx
@@ -165,9 +165,8 @@ ChestX-Ray/
 | **`fp-medical-banun.py`** | Pipeline utama untuk ekstraksi fitur menggunakan Medical Stable Diffusion (SD v1.4 + LoRA). Menjalankan forward pass melalui frozen U-Net, mengumpulkan feature maps via `BlockFeatureCollector`, dan melatih modul Feature Aggregation (DFATB + FAFN + DiffDenoising). Output: file `.pt` checkpoint FA. |
 | **`fp-mlp-classifier.py`** | Training dan evaluasi MLP classification head. Membaca CSV fitur yang diekstrak, menjalankan 4 skenario (balanced/imbalanced × ±FSA) untuk setiap feature extractor. Includes: 3-stage FSA (FS-SMOTE, Gaussian Noise, Mixup), class weighting, dan comprehensive evaluation (Acc, F1-macro, AUC-OvR). |
 | **`Medical X-ray Stable Diffusion_feature_map_extractor.py`** | Core extraction logic — preprocessing gambar, VAE encoding, noise injection at timestep, U-Net forward pass dengan hook attachment, dan attention map collection. Digunakan oleh `fp-medical-banun.py`. |
-| **`fa_best_med_balanced_1.pt`** | Trained Feature Aggregation model checkpoint (~315 MB) untuk skenario balanced. Berisi: `fa_model_state`, hyperparameters (channels, z_dim), dan metadata. |
-| **`fa_best_med_imbalanced.pt`** | Trained FA checkpoint (~315 MB) untuk skenario imbalanced. |
-| **`best_overall_weights.pt`** | Best performing MLP classifier weights (~274 KB). State dict berisi `net.0` (LayerNorm), `net.1` (Linear 128→512), `net.4` (Linear 512→6). |
+| **`fa_best_med_balanced_1.pt`** | Trained Feature Aggregation model checkpoint (~315 MB). Berisi: `fa_model_state`, hyperparameters (channels, z_dim), dan metadata. |
+| **`best_overall_weights.pt`** | MLP classifier weights (~274 KB). State dict berisi `net.0` (LayerNorm), `net.1` (Linear 128→512), `net.4` (Linear 512→6). |
 
 ---
 
@@ -185,7 +184,7 @@ uvicorn app:app --host 0.0.0.0 --port 8000
 ```
 
 ### Google Colab (GPU)
-1. Upload `backend/` dan `research_file/` ke Colab
+1. Upload `backend/` dan `research/` ke Colab
 2. Copy isi `backend/colab_run.py` ke cell Colab
 3. Set `NGROK_AUTH_TOKEN` dari [ngrok dashboard](https://dashboard.ngrok.com)
 4. Jalankan cell — salin URL ngrok ke `.env.local`

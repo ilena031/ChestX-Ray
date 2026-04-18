@@ -6,10 +6,10 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      - ./research_file:/app/../research_file:ro
+      - ./research:/app/../research:ro
     environment:
-      - PT_PATH=/app/../research_file/fa_best_med_balanced.pt
-      - MLP_PATH=/app/../research_file/best_overall_weights.pt
+      - PT_PATH=/app/../research/fa_best_med_balanced_1.pt
+      - MLP_PATH=/app/../research/best_overall_weights.pt
     deploy:
       resources:
         reservations:

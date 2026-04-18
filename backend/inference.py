@@ -23,15 +23,16 @@ from models import (
 )
 
 class MedicalXRayPipeline:
-    def __init__(self, sd_model_id: str, lora_weight: str, pt_path: str, mlp_path: str = None, device: str = "cuda"):
+    def __init__(self, lora_model_id: str, lora_weight: str, pt_path: str, mlp_path: str = None, device: str = "cuda"):
         self.device = device
-        self.sd_model_id = sd_model_id
+        self.lora_model_id = lora_model_id
         self.lora_weight = lora_weight
         self.pt_path = pt_path
         self.mlp_path = mlp_path
         self.dtype = torch.float16 if device == "cuda" else torch.float32
 
-        self.class_names = ['Atelectasis', 'Effusion', 'Infiltration', 'No Finding', 'Nodule', 'Pneumothorax']
+        # Must match sorted() order used during training (see research/fp-medical-banun.py:102)
+        self.class_names = sorted(['Atelectasis', 'Effusion', 'Infiltration', 'No Finding', 'Nodule', 'Pneumothorax'])
         
         self.pipe = None
         self.fa_model = None
@@ -48,7 +49,7 @@ class MedicalXRayPipeline:
         ).to(self.device)
         
         try:
-            self.pipe.load_lora_weights(self.sd_model_id, weight_name=self.lora_weight)
+            self.pipe.load_lora_weights(self.lora_model_id, weight_name=self.lora_weight)
         except Exception as e:
             print(f"Failed to load LoRA weights. Proceeding without LoRA: {e}")
 
@@ -69,6 +70,8 @@ class MedicalXRayPipeline:
         self.attn_collector.install()
 
         print("Loading FA Model & Classifier Component...")
+        # weights_only=False: FA checkpoint stores a Python dict with metadata
+        # (feature_channels, class_names, etc). Only load from trusted local files.
         ckpt = torch.load(self.pt_path, map_location=self.device, weights_only=False)
         
         self.fa_model = FeatureAggregationEncoder(
@@ -115,12 +118,26 @@ class MedicalXRayPipeline:
 
         print("Models loaded successfully.")
 
-    def cleanup(self):
-        self.feature_collector.features.clear()
-        self.attn_collector.maps.clear()
+    def _reset_caches(self):
+        """Clear per-request hook dicts + free VRAM. Call after every predict."""
+        if self.feature_collector is not None:
+            self.feature_collector.features.clear()
+        if self.attn_collector is not None:
+            self.attn_collector.maps.clear()
         gc.collect()
         if torch.cuda.is_available():
             torch.cuda.empty_cache()
+
+    def release(self):
+        """Fully unhook the U-Net and restore original attention processors.
+        Only call at shutdown — the app keeps hooks installed between requests."""
+        try:
+            if self.feature_collector is not None:
+                self.feature_collector.remove()
+            if self.attn_collector is not None:
+                self.attn_collector.restore()
+        finally:
+            self._reset_caches()
 
     def predict(self, image: Image.Image, prompt: str = "A chest X-ray", timestep: int = 10):
         try:
@@ -176,5 +193,5 @@ class MedicalXRayPipeline:
                 "probabilities": {name: float(prob) for name, prob in zip(self.class_names, probs)}
             }
         finally:
-            self.cleanup()
+            self._reset_caches()
 

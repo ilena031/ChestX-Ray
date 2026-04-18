@@ -1,0 +1,10 @@
+# Python backend — runs externally on GPU machine (Colab/self-hosted), not on Vercel
+backend/
+research/
+
+# Docker infrastructure — not used by Vercel build
+docker-compose.yml
+Dockerfile.frontend
+
+# Documentation
+docs/

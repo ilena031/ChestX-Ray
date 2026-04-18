@@ -57,3 +57,7 @@ venv/
 # IDE
 .vscode/
 .idea/
+
+# Claude Code local context (do not push)
+CLAUDE.md
+.claude/

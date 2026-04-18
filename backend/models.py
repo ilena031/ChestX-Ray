@@ -425,13 +425,18 @@ def _build_attention_pairs(feature_list: List[torch.Tensor], attention_keys: Lis
         target_area = f.shape[-2] * f.shape[-1]
         ranked_idx = sorted(range(len(attention_list)), key=lambda i: abs(attn_areas[i] - target_area))
         i1 = ranked_idx[0]
-        i2 = ranked_idx[1] if len(ranked_idx) > 1 else ranked_idx[0]
-
         a1 = attention_list[i1]
-        a2 = attention_list[i2]
+        if len(ranked_idx) > 1:
+            i2 = ranked_idx[1]
+            a2 = attention_list[i2]
+            pair_names.append((attention_keys[i1], attention_keys[i2]))
+        else:
+            # Only one attention map available — differential denoising
+            # degrades gracefully with a2=0 so adiff = a1 (instead of (1-λ)·a1).
+            a2 = torch.zeros_like(a1)
+            pair_names.append((attention_keys[i1], f"zeros_like({attention_keys[i1]})"))
         pairs.append((a1, a2))
         attn_channels.append(a1.shape[1])
-        pair_names.append((attention_keys[i1], attention_keys[i2]))
 
     return pairs, attn_channels, pair_names
 

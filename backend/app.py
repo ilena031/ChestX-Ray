@@ -1,3 +1,4 @@
+import asyncio
 import io
 import os
 import time
@@ -19,7 +20,7 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_credentials=True,
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -27,14 +28,18 @@ app.add_middleware(
 # ── Global state ────────────────────────────────────────────
 pipeline: Optional[MedicalXRayPipeline] = None
 _warmup_done: bool = False
+_predict_lock = asyncio.Lock()
 
 # ── Config (env-overridable) ────────────────────────────────
-SD_MODEL_ID = os.getenv("SD_MODEL_ID", "Osama03/Medical-X-ray-image-generation-stable-diffusion")
+# LORA_MODEL_ID is the HF repo hosting the LoRA weights; the base SD model
+# (v1-4) is hardcoded inside inference.py. Old name SD_MODEL_ID still
+# accepted as a fallback for backward compatibility.
+LORA_MODEL_ID = os.getenv("LORA_MODEL_ID", os.getenv("SD_MODEL_ID", "Osama03/Medical-X-ray-image-generation-stable-diffusion"))
 LORA_WEIGHT = os.getenv("LORA_WEIGHT", "pytorch_lora_weights.safetensors")
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-PT_PATH  = os.getenv("PT_PATH", os.path.join(BASE_DIR, "research_file", "fa_best_med_balanced.pt"))
-MLP_PATH = os.getenv("MLP_PATH", os.path.join(BASE_DIR, "research_file", "best_overall_weights.pt"))
+PT_PATH  = os.getenv("PT_PATH", os.path.join(BASE_DIR, "research", "fa_best_med_balanced_1.pt"))
+MLP_PATH = os.getenv("MLP_PATH", os.path.join(BASE_DIR, "research", "best_overall_weights.pt"))
 
 
 # ── Lifecycle ───────────────────────────────────────────────
@@ -45,8 +50,8 @@ async def startup_event():
     pt_path = PT_PATH
     if not os.path.exists(pt_path):
         alts = [
-            os.path.join(BASE_DIR, "research_file", "fa_best_med_balanced_1.pt"),
-            os.path.join(BASE_DIR, "research_file", "fa_best_med_imbalanced.pt"),
+            os.path.join(BASE_DIR, "research", "fa_best_med_balanced_1.pt"),
+            os.path.join(BASE_DIR, "research", "fa_best_med_balanced.pt"),
         ]
         for alt in alts:
             if os.path.exists(alt):
@@ -61,7 +66,7 @@ async def startup_event():
     print(f"[startup] Using device: {device}")
 
     pipeline = MedicalXRayPipeline(
-        sd_model_id=SD_MODEL_ID,
+        lora_model_id=LORA_MODEL_ID,
         lora_weight=LORA_WEIGHT,
         pt_path=pt_path,
         mlp_path=MLP_PATH,
@@ -74,7 +79,7 @@ async def startup_event():
 async def shutdown_event():
     global pipeline
     if pipeline:
-        pipeline.cleanup()
+        pipeline.release()
         del pipeline
 
 
@@ -143,7 +148,8 @@ async def warmup():
 
     # Run full pipeline (VAE encode → noise → U-Net forward → FA → MLP)
     try:
-        _ = pipeline.predict(dummy_img, prompt="A chest X-ray", timestep=10)
+        async with _predict_lock:
+            _ = pipeline.predict(dummy_img, prompt="A chest X-ray", timestep=10)
     except Exception as e:
         # Even if prediction fails (e.g. bad checkpoint), the CUDA kernels
         # and weights are now loaded — that's the goal.
@@ -178,7 +184,8 @@ async def predict(file: UploadFile = File(...), prompt: str = Form("A chest X-ra
         raise HTTPException(status_code=503, detail="Pipeline is not initialized.")
 
     try:
-        result = pipeline.predict(image, prompt=prompt)
+        async with _predict_lock:
+            result = pipeline.predict(image, prompt=prompt)
         return result
     except Exception as e:
         import traceback
@@ -199,7 +206,8 @@ async def predict_batch(files: List[UploadFile] = File(...), prompt: str = Form(
         try:
             image_data = await file.read()
             image = Image.open(io.BytesIO(image_data)).convert("RGB")
-            res = pipeline.predict(image, prompt=prompt)
+            async with _predict_lock:
+                res = pipeline.predict(image, prompt=prompt)
             results.append(res)
         except Exception as e:
             import traceback
